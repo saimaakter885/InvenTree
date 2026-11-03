@@ -217,6 +217,7 @@ The following [global settings](../settings/global.md) are available for purchas
 {{ globalsetting("PURCHASEORDER_ENABLED") }}
 {{ globalsetting("PURCHASEORDER_REFERENCE_PATTERN") }}
 {{ globalsetting("PURCHASEORDER_REQUIRE_RESPONSIBLE") }}
+{{ globalsetting("PURCHASEORDER_REQUIRE_TARGET_DATE") }}
 {{ globalsetting("PURCHASEORDER_CONVERT_CURRENCY") }}
 {{ globalsetting("PURCHASEORDER_EDIT_COMPLETED_ORDERS") }}
 {{ globalsetting("PURCHASEORDER_AUTO_COMPLETE") }}

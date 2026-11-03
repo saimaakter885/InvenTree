@@ -425,8 +425,13 @@ class PurchaseOrderSerializer(
         return [*fields, 'duplicate']
 
     def __init__(self, *args, **kwargs):
-        """Set a dynamic default for the 'destination' field, on creation only."""
+        """Set dynamic requirements and defaults for purchase order fields."""
         super().__init__(*args, **kwargs)
+
+        if self.instance is None and get_global_setting(
+            'PURCHASEORDER_REQUIRE_TARGET_DATE', backup_value=False
+        ):
+            self.fields['target_date'].required = True
 
         if self.instance is None:
             location_pk = get_global_setting(

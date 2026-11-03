@@ -1027,6 +1027,12 @@ SYSTEM_SETTINGS: dict[str, InvenTreeSettingsKeyType] = {
         'default': False,
         'validator': bool,
     },
+    'PURCHASEORDER_REQUIRE_TARGET_DATE': {
+        'name': _('Require Target Date'),
+        'description': _('A target date must be specified for each purchase order'),
+        'default': False,
+        'validator': bool,
+    },
     'PURCHASEORDER_EDIT_COMPLETED_ORDERS': {
         'name': _('Edit Completed Purchase Orders'),
         'description': _(
