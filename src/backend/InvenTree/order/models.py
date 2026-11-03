@@ -354,6 +354,7 @@ class Order(
     """
 
     REQUIRE_RESPONSIBLE_SETTING = None
+    REQUIRE_TARGET_DATE_SETTING = None
     UNLOCK_SETTING = None
     IMPORT_ID_FIELDS = ['reference']
 
@@ -427,6 +428,13 @@ class Order(
                 if not self.responsible:
                     raise ValidationError({
                         'responsible': _('Responsible user or group must be specified')
+                    })
+
+        if self.REQUIRE_TARGET_DATE_SETTING:
+            if get_global_setting(self.REQUIRE_TARGET_DATE_SETTING, backup_value=False):
+                if not self.target_date:
+                    raise ValidationError({
+                        'target_date': _('Target date must be specified')
                     })
 
         # Check that the referenced 'contact' matches the correct 'company'
@@ -656,6 +664,7 @@ class PurchaseOrder(TotalPriceMixin, Order):
 
     REFERENCE_PATTERN_SETTING = 'PURCHASEORDER_REFERENCE_PATTERN'
     REQUIRE_RESPONSIBLE_SETTING = 'PURCHASEORDER_REQUIRE_RESPONSIBLE'
+    REQUIRE_TARGET_DATE_SETTING = 'PURCHASEORDER_REQUIRE_TARGET_DATE'
     STATUS_CLASS = PurchaseOrderStatus
     UNLOCK_SETTING = 'PURCHASEORDER_EDIT_COMPLETED_ORDERS'
 

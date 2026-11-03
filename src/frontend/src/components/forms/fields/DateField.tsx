@@ -65,6 +65,7 @@ function DateField({
       type={undefined}
       error={definition.error ?? error?.message}
       value={dateValue}
+      required={definition.required}
       clearable={!definition.required}
       onChange={onChange}
       valueFormat={valueFormat}

@@ -551,6 +551,100 @@ class PurchaseOrderTest(OrderTest):
         # Revert the setting to previous value
         InvenTreeSetting.set_setting(setting, False)
 
+    def test_po_require_target_date(self):
+        """Test the PURCHASEORDER_REQUIRE_TARGET_DATE setting."""
+        self.assignRole('purchase_order.add')
+        self.assignRole('purchase_order.change')
+
+        setting = 'PURCHASEORDER_REQUIRE_TARGET_DATE'
+        url = reverse('api-po-list')
+
+        set_global_setting(setting, False)
+
+        data = {
+            'reference': 'PO-12345001',
+            'supplier': 1,
+            'description': 'A test purchase order without a target date',
+        }
+
+        # The setting is disabled by default, so a target date is optional.
+        order_without_date = self.post(url, data, expected_code=201)
+
+        null_date_data = {**data, 'reference': 'PO-12345004', 'target_date': None}
+        self.post(url, null_date_data, expected_code=201)
+
+        options = self.options(url, expected_code=200)
+        self.assertFalse(options.data['actions']['POST']['target_date']['required'])
+
+        set_global_setting(setting, True)
+
+        # The required flag is used by the frontend form to display its marker.
+        options = self.options(url, expected_code=200)
+        self.assertTrue(options.data['actions']['POST']['target_date']['required'])
+
+        missing_date_data = {**data, 'reference': 'PO-12345002'}
+        response = self.post(url, missing_date_data, expected_code=400)
+        self.assertIn('target_date', response.data)
+
+        null_date_data['reference'] = 'PO-12345005'
+        response = self.post(url, null_date_data, expected_code=400)
+        self.assertIn('target_date', response.data)
+
+        dated_order_data = {
+            **data,
+            'reference': 'PO-12345003',
+            'target_date': '2026-12-31',
+        }
+        dated_order = self.post(url, dated_order_data, expected_code=201)
+
+        # Existing orders without a target date cannot be edited until one is set.
+        response = self.patch(
+            reverse('api-po-detail', kwargs={'pk': order_without_date.data['pk']}),
+            {'description': 'An unrelated edit'},
+            expected_code=400,
+        )
+        self.assertIn('target_date', response.data)
+
+        # An existing order can be updated by setting its missing target date.
+        response = self.patch(
+            reverse('api-po-detail', kwargs={'pk': order_without_date.data['pk']}),
+            {'target_date': '2026-12-30'},
+            expected_code=200,
+        )
+        self.assertEqual(response.data['target_date'], '2026-12-30')
+
+        dated_order_url = reverse(
+            'api-po-detail', kwargs={'pk': dated_order.data['pk']}
+        )
+
+        # A target date cannot be cleared while the setting is enabled.
+        response = self.patch(dated_order_url, {'target_date': None}, expected_code=400)
+        self.assertIn('target_date', response.data)
+
+        # An unrelated edit is allowed when the existing target date is retained.
+        response = self.patch(
+            dated_order_url, {'description': 'An unrelated edit'}, expected_code=200
+        )
+        self.assertEqual(response.data['target_date'], '2026-12-31')
+
+        # PUT must preserve an existing date when the field is omitted.
+        response = self.put(
+            dated_order_url,
+            {
+                'reference': dated_order_data['reference'],
+                'supplier': 1,
+                'description': 'Full update without target date',
+            },
+            expected_code=200,
+        )
+        self.assertEqual(response.data['target_date'], '2026-12-31')
+
+        set_global_setting(setting, False)
+
+        # With the setting disabled, an existing date can be cleared.
+        response = self.patch(dated_order_url, {'target_date': None}, expected_code=200)
+        self.assertIsNone(response.data['target_date'])
+
     def test_po_create_default_destination(self):
         """Test that the PURCHASEORDER_DEFAULT_RECEIVE_LOCATION setting is applied on creation."""
         self.assignRole('purchase_order.add')
